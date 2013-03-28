@@ -1,5 +1,4 @@
-#!/opt/python-2.7/bin/python
-##!/usr/bin/python
+#!/usr/bin/python
 ################################################################################
 #
 #                            PUBLIC DOMAIN NOTICE
