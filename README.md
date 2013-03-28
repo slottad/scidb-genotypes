@@ -11,7 +11,7 @@ subdirectory in the SciDB source tree, and include an
 'add_subdirectory("genotypes")' directive in the
 examples/CMakeLists.txt file.
 
-# Loading Data
+## Loading Data
 
 To load a typical set of VCF files into a set of related SciDB arrays
 with the common basename "foobar" you would use the following
