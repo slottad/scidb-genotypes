@@ -68,7 +68,41 @@ EXPORTED_FUNCTION void GetPluginVersion(uint32_t& major, uint32_t& minor,
     build = scidb::SCIDB_VERSION_BUILD();
 }
 
-void extract_value(const scidb::Value** args, scidb::Value* res, void*)
+struct StartsWithPred
+{
+    string key;
+    bool operator()(string const& entry)
+    {
+        if (entry.size() < key.size()) return false;
+        return ( key == entry.substr(0,key.size()) );
+    }
+};
+
+void extract_value2(const scidb::Value** args, scidb::Value* res, void*)
+{
+    string const& key = args[0]->getString();
+    string const& keyValStr = args[1]->getString();
+
+    vector<string> keyValues;
+    split(keyValues, keyValStr, is_any_of(";"));
+
+    StartsWithPred pred;
+    pred.key = key;
+
+    vector<string>::iterator it = find_if(keyValues.begin(),
+                                       keyValues.end(),
+                                       pred);
+    if (it == keyValues.end()) return;
+
+    vector<string> kv_pair;
+    split(kv_pair, *it, is_any_of("="));
+
+    if (kv_pair.size() < 2) return;
+    
+    res->setString(kv_pair[1].c_str());
+}
+
+void extract_value3(const scidb::Value** args, scidb::Value* res, void*)
 {
     string const& key = args[0]->getString();
     string const& fmtStr = args[1]->getString();
@@ -626,7 +660,8 @@ void bitwise_xor64(const scidb::Value** args, scidb::Value* res, void*)
 
 REGISTER_TYPE(gt8, sizeof(gt8_t));
 
-REGISTER_FUNCTION(extract_value, list_of(TID_STRING)(TID_STRING)(TID_STRING), TID_STRING, extract_value);
+REGISTER_FUNCTION(extract_value, list_of(TID_STRING)(TID_STRING), TID_STRING, extract_value2);
+REGISTER_FUNCTION(extract_value, list_of(TID_STRING)(TID_STRING)(TID_STRING), TID_STRING, extract_value3);
 REGISTER_FUNCTION(num_csv, list_of(TID_STRING), "uint32", num_csv);
 REGISTER_FUNCTION(hemizygous, list_of("gt8"), "bool", gt8_hemizygous);
 REGISTER_FUNCTION(homozygous, list_of("gt8"), "bool", gt8_homozygous);
