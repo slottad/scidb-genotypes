@@ -68,7 +68,6 @@ EXPORTED_FUNCTION void GetPluginVersion(uint32_t& major, uint32_t& minor,
     build = scidb::SCIDB_VERSION_BUILD();
 }
 
-//string extract_value(const scidb::Value** args)
 void extract_value(const scidb::Value** args, scidb::Value* res, void*)
 {
     string const& key = args[0]->getString();
@@ -105,6 +104,137 @@ void num_csv(const scidb::Value** args, scidb::Value* res, void*)
     res->setUint32(count);
 }
 
+// True iff gt8 is haploid and not empty
+void gt8_hemizygous(const scidb::Value** args, scidb::Value* res, void* misc)
+{
+    gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
+    
+    uint8_t ploidy = *g & 0x80;    
+    if (ploidy == 0) {
+        res->setBool(true);
+    } else {
+        res->setBool(false);
+    }
+}
+
+// True iff gt8 is diploid, not missing values, and both alleles are the same 
+void gt8_homozygous(const scidb::Value** args, scidb::Value* res, void* misc)
+{
+    gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
+    
+    uint8_t ploidy = *g & 0x80;    
+    if (ploidy == 0) {
+        res->setBool(false);
+    } else {
+        uint8_t a = *g & 0x38;
+        a >>= 3;
+
+        uint8_t b = *g & 0x07;
+
+        if ((a > 0) && (b > 0))
+            res->setBool(a == b);
+        else
+            res->setNull();
+    }
+}
+
+// True iff gt8 is diploid, not missing values, and both alleles are different
+void gt8_heterozygous(const scidb::Value** args, scidb::Value* res, void* misc)
+{
+    gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
+
+    uint8_t ploidy = *g & 0x80;    
+    if (ploidy == 0) {
+        res->setBool(false);
+    } else {
+        uint8_t a = *g & 0x38;
+        a >>= 3;
+
+        uint8_t b = *g & 0x07;
+
+        if ((a > 0) && (b > 0))
+            res->setBool(a != b);
+        else {
+            res->setNull();
+        }
+    }
+}
+
+// True iff there is no data for any allele
+void gt8_empty(const scidb::Value** args, scidb::Value* res, void* misc)
+{
+    gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
+
+    uint8_t ploidy = *g & 0x80;    
+    if (ploidy == 0) {
+        if (*g == 0) {
+            res->setBool(true);
+            return;
+        }
+    } else {
+        uint8_t v = *g & 0x3F;
+        if (v==0) {
+            res->setBool(true);
+            return;
+        }
+    }
+    res->setBool(false);
+}
+
+// True iff any allele is missing
+void gt8_alleleMissing(const scidb::Value** args, scidb::Value* res, void* misc)
+{
+    gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
+
+    uint8_t ploidy = *g & 0x80;    
+    if (ploidy == 0) {
+        if (*g == 0) {
+            res->setBool(true);
+            return;
+        }
+    } else {
+        uint8_t a = *g & 0x38;
+        a >>= 3;
+        uint8_t b = *g & 0x07;
+        if ((a==0) || (b==0)) {
+            res->setBool(true);
+            return;
+        } 
+    }
+    res->setBool(false);
+}
+
+// Extract a specified allele value
+void gt8_alleleValue(const scidb::Value** args, scidb::Value* res, void* misc)
+{
+    gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
+    int64_t ai = args[1]->getInt64(); // allele, 1=a, 2=b
+
+    uint8_t ploidy = *g & 0x80;    
+    if (ploidy == 0) {
+        if ((*g == 0) || (ai > 1)) 
+            res->setNull();
+        else
+            res->setUint64(*g-1);
+    } else {
+        if (ai == 1) {
+            uint8_t a = *g & 0x38;
+            a >>= 3;
+            if (a == 0)
+                res->setNull();
+            else
+                res->setUint64(a-1);
+        } else {
+            uint8_t b = *g & 0x07;
+            if (b == 0)
+                res->setNull();
+            else
+                res->setUint64(b-1);
+        }
+    }
+}
+
+// Count the number of alleles values, 0=ref, 1=1st alt, 2=2nd alt, etc
 void gt8_alleleCount(const scidb::Value** args, scidb::Value* res, void* misc)
 {
     gt8_t* g = static_cast<gt8_t*>( args[0]->data() );
@@ -114,14 +244,11 @@ void gt8_alleleCount(const scidb::Value** args, scidb::Value* res, void* misc)
 
     uint8_t ploidy = *g & 0x80;
     
-    if (ploidy == 0) 
-    {
+    if (ploidy == 0) {
         if (*g != 0) 
             if ((*g-1) == ai)
                 ac++;
-    } 
-    else 
-    {
+    } else {
         uint8_t a = *g & 0x38;
         a >>= 3;
 
@@ -135,7 +262,7 @@ void gt8_alleleCount(const scidb::Value** args, scidb::Value* res, void* misc)
                 ac++;
     }
     
-    res->setUint32(ac);
+    res->setUint64(ac);
 }
 
 void gt8_ploidy(const scidb::Value** args, scidb::Value* res, void* misc)
@@ -501,7 +628,13 @@ REGISTER_TYPE(gt8, sizeof(gt8_t));
 
 REGISTER_FUNCTION(extract_value, list_of(TID_STRING)(TID_STRING)(TID_STRING), TID_STRING, extract_value);
 REGISTER_FUNCTION(num_csv, list_of(TID_STRING), "uint32", num_csv);
-REGISTER_FUNCTION(allele_count, list_of("gt8")("int64"), "uint32", gt8_alleleCount);
+REGISTER_FUNCTION(hemizygous, list_of("gt8"), "bool", gt8_hemizygous);
+REGISTER_FUNCTION(homozygous, list_of("gt8"), "bool", gt8_homozygous);
+REGISTER_FUNCTION(heterozygous, list_of("gt8"), "bool", gt8_heterozygous);
+REGISTER_FUNCTION(empty_gt, list_of("gt8"), "bool", gt8_empty);
+REGISTER_FUNCTION(allele_missing, list_of("gt8"), "bool", gt8_alleleMissing);
+REGISTER_FUNCTION(allele_value, list_of("gt8")("int64"), "uint64", gt8_alleleValue);
+REGISTER_FUNCTION(allele_count, list_of("gt8")("int64"), "uint64", gt8_alleleCount);
 REGISTER_FUNCTION(ploidy, list_of("gt8"), "uint8", gt8_ploidy);
 REGISTER_FUNCTION(phase, list_of("gt8"), "bool", gt8_phase);
 REGISTER_FUNCTION(<=, list_of("gt8")("gt8"), "bool", gt8_lessEqualThan);

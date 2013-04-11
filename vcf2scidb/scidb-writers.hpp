@@ -1,4 +1,4 @@
-/*  $Id: scidb-writers.hpp 391604 2013-03-09 03:58:47Z slottad $
+/*  $Id: scidb-writers.hpp 394139 2013-03-30 03:26:57Z slottad $
  * ===========================================================================
  *
  *                            PUBLIC DOMAIN NOTICE

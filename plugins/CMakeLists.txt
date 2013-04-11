@@ -1,23 +1,28 @@
-########################################
-# BEGIN_COPYRIGHT
+#############################################################################
 #
-# This file is part of SciDB.
-# Copyright (C) 2008-2011 SciDB, Inc.
+#                            PUBLIC DOMAIN NOTICE
+#               National Center for Biotechnology Information
 #
-# SciDB is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#  This software/database is a "United States Government Work" under the
+#  terms of the United States Copyright Act.  It was written as part of
+#  the author's official duties as a United States Government employee and
+#  thus cannot be copyrighted.  This software/database is freely available
+#  to the public for use. The National Library of Medicine and the U.S.
+#  Government have not placed any restriction on its use or reproduction.
 #
-# SciDB is distributed "AS-IS" AND WITHOUT ANY WARRANTY OF ANY KIND,
-# INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY,
-# NON-INFRINGEMENT, OR FITNESS FOR A PARTICULAR PURPOSE. See
-# the GNU General Public License for the complete license terms.
+#  Although all reasonable efforts have been taken to ensure the accuracy
+#  and reliability of the software and data, the NLM and the U.S.
+#  Government do not and cannot warrant the performance or results that
+#  may be obtained by using this software or data. The NLM and the U.S.
+#  Government disclaim all warranties, express or implied, including
+#  warranties of performance, merchantability or fitness for any particular
+#  purpose.
 #
-# You should have received a copy of the GNU General Public License
-# along with SciDB.  If not, see <http://www.gnu.org/licenses/>.
+#  Please cite the author in any work or product based on this material.
 #
-# END_COPYRIGHT
-########################################
+#############################################################################
+#
+# Author:  Douglas Slotta
+#
 
 add_subdirectory("gt8")
