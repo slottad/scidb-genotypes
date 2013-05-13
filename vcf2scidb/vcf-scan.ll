@@ -1,4 +1,4 @@
-/*  $Id: vcf-scan.ll 394139 2013-03-30 03:26:57Z slottad $
+/*  $Id: vcf-scan.ll 398471 2013-05-06 18:54:57Z slottad $
  * ===========================================================================
  *
  *                            PUBLIC DOMAIN NOTICE
@@ -175,10 +175,7 @@ eol       \n
             break;
         default: // SAMPLES
         {
-            gt_writer.put_prefix();
             cur_sample=colnum-10;
-            gt_writer.put_int64(sampleids[cur_sample]);
-            gt_writer.put_separator();
             string gt;
             string rest;
             size_t div = yystr.find(':');
@@ -189,10 +186,15 @@ eol       \n
                 gt = yystr.substr(0,div);
                 rest = yystr.substr(div+1, string::npos);
             }
-            gt_writer.put_data(gt, eNotNullable, eGt8);
-            gt_writer.put_separator();
-            gt_writer.put_data(rest, eNullable, eString);
-            gt_writer.put_endrow();
+            if ((gt != "./.") && (gt != ".|.")) {
+                gt_writer.put_prefix();
+                gt_writer.put_int64(sampleids[cur_sample]);
+                gt_writer.put_separator();
+                gt_writer.put_data(gt, eNotNullable, eGt8);
+                gt_writer.put_separator();
+                gt_writer.put_data(rest, eNullable, eString);
+                gt_writer.put_endrow();
+            }
             break;
         }
         }
